@@ -1,8 +1,10 @@
 import { createStore, combineReducers, compose, applyMiddleware } from 'redux'
 import thunk from 'redux-thunk'
 import auth from './State/auth'
+import userData, { loadTextFromDbAsyncAction } from './State/userData'
 
 const reducer = combineReducers({
+  userData,
   auth
 })
 

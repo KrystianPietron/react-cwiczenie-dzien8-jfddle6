@@ -1,4 +1,4 @@
-import { auth, googleProvider } from '../firebaseConfig'
+import { auth, database, googleProvider } from '../firebaseConfig'
 
 const LOG_IN = 'auth/LOG_IN'
 const LOG_OUT = 'auth/LOG_OUT'
@@ -8,10 +8,14 @@ const PASSWORD = 'auth/PASSWORD'
 const INITIAL_STATE = {
     isUserLoggedIn: false,
     email: '',
-    password: ''
+    password: '',
+    user: null
 }
 
-const logInAction = () => ({ type: LOG_IN })
+const logInAction = (user) => ({
+    type: LOG_IN,
+    user
+})
 
 const logOutAction = () => ({ type: LOG_OUT })
 
@@ -20,7 +24,9 @@ export const initAuthChangeAsyncAction = () => (dispatch, getState) => {
         // user is an obj with users data or null when not logged in
         user => {
             if (user) {
-                dispatch(logInAction())
+                dispatch(logInAction(user))
+                dispatch(saveLogInTimestampAsyncAction())
+
             } else {
                 dispatch(logOutAction())
             }
@@ -37,7 +43,11 @@ export const onPasswordChangeAction = (value) => ({
     type: PASSWORD,
     value
 })
-
+const saveLogInTimestampAsyncAction = () => (dispatch, getState) => {
+    database.ref('loginLogs').push({
+        timestamp: Date.now()
+    })
+}
 export const logInAsyncAction = () => (dispatch, getState) => {
     const { auth: { email, password } } = getState()
     auth.signInWithEmailAndPassword(email, password)
@@ -60,12 +70,14 @@ export default (state = INITIAL_STATE, action) => {
         case LOG_IN:
             return {
                 ...state,
-                isUserLoggedIn: true
+                isUserLoggedIn: true,
+                user: action.user
             }
         case LOG_OUT:
             return {
                 ...state,
-                isUserLoggedIn: false
+                isUserLoggedIn: false,
+                user: null
             }
         case EMAIL:
             return {
